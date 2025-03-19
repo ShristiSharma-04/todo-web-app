@@ -1,39 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 
 const App = () => {
   const [todos, setTodos] = useState([]);
-  const [pendingDelay, setPendingDelay] = useState(0);
   const [todoCount, setTodoCount] = useState(1);
 
+  const promiseChain = useRef(Promise.resolve());
+
   const addTodo = (delay = 0) => {
+    const currentTodoCount = todoCount; 
     const newId = Date.now();
-  
+
     setTodos((prev) => [
       ...prev,
-      { id: newId, text: "Loading...", number: todoCount, isLoading: true },
+      { id: newId, text: "Loading...", number: currentTodoCount, isLoading: true },
     ]);
-  
-    console.log(`Operation ${todoCount} created`);
-  
-    setPendingDelay((prevDelay) => prevDelay + delay);
-  
-    setTimeout(() => {
-      setTodos((prev) =>
-        prev.map((todo) =>
-          todo.id === newId
-            ? { ...todo, text: `Todo Item - ${todo.number}`, isLoading: false }
-            : todo
-        )
-      );
-  
-      console.log(`Operation ${todoCount} completed`);
-  
-      setPendingDelay((prevDelay) => Math.max(prevDelay - delay, 0));
-    }, pendingDelay + delay);
-  
+
+    console.log(`Operation ${currentTodoCount} created`);
+    promiseChain.current = promiseChain.current.then(() => {
+      console.log(`Operation ${currentTodoCount} started`);
+      
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          setTodos((prev) =>
+            prev.map((todo) =>
+              todo.id === newId
+                ? { ...todo, text: `Todo Item - ${todo.number}`, isLoading: false }
+                : todo
+            )
+          );
+          console.log(`Operation ${currentTodoCount} completed`);
+          resolve();
+        }, delay);
+      });
+    });
+
     setTodoCount((prev) => prev + 1);
   };
-  
+
   return (
     <div className="flex flex-row h-screen p-4 bg-gray-100">
       {/* Left side */}
@@ -41,9 +44,12 @@ const App = () => {
         <h2 className="text-xl font-semibold mb-2">Todo List</h2>
         <div className="space-y-2 max-h-[80vh] overflow-auto">
           {todos.map((todo) => (
-            <div key={todo.id} className={`p-2 border rounded  shadow-sm ${
-              todo.isLoading ? 'bg-pink-100':'bg-blue-500'
-            }`}>
+            <div
+              key={todo.id}
+              className={`p-2 border rounded shadow-sm ${
+                todo.isLoading ? "bg-pink-100" : "bg-blue-500"
+              }`}
+            >
               {todo.text}
             </div>
           ))}
