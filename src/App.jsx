@@ -1,23 +1,25 @@
 import React, { useState, useEffect } from "react";
+
 const App = () => {
-  const [todos, setTodos] = useState([]);
+  const [todos, setTodos] = useState([]); 
   const [todoCount, setTodoCount] = useState(1);
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState([]); 
+  const [isTaskRunning, setIsTaskRunning] = useState(false);
+
   const addTodo = (delay = 0) => {
     const currentTodoCount = todoCount;
-    const newId = Date.now();
-   
+    const newId = Date.now(); 
     setTodos((prev) => [
       ...prev,
       { id: newId, text: "Loading...", number: currentTodoCount, isLoading: true },
     ]);
-    console.log(`Operation ${currentTodoCount} created`);
    
     const taskFunc = () => {
-      console.log(`Operation ${currentTodoCount} started`);
       return new Promise((resolve) => {
+        console.log(`Operation ${currentTodoCount} started`);
+        setIsTaskRunning(true); 
+
         setTimeout(() => {
- 
           setTodos((prev) =>
             prev.map((todo) =>
               todo.id === newId
@@ -29,32 +31,32 @@ const App = () => {
                 : todo
             )
           );
-          console.log(`Operation ${currentTodoCount}`);
-        
+          console.log(`Operation ${currentTodoCount} completed`);
           setTimeout(() => {
-            setTodos((prev) => prev.filter((todo) => todo.id !== newId)); 
             resolve();
-          }, delay);
+          }, ); 
         }, delay);
       });
     };
-    
-    setTasks((prev) => [...prev, taskFunc]);
+
+    setTasks((prev) => [...prev, taskFunc]); 
     setTodoCount((prev) => prev + 1);
   };
 
   useEffect(() => {
     const executeTask = async () => {
-      if (tasks.length > 0) {
+      if (!isTaskRunning && tasks.length > 0) {
         const currentTask = tasks[0];
         if (currentTask) {
           await currentTask(); 
           setTasks((prev) => prev.slice(1)); 
+          setIsTaskRunning(false); 
         }
       }
     };
     executeTask();
-  }, [tasks]);
+  }, [tasks, isTaskRunning]);
+
   return (
     <div className="flex flex-row h-screen p-4 bg-gray-100">
       {/* Left side */}
@@ -97,4 +99,5 @@ const App = () => {
     </div>
   );
 };
+
 export default App;
